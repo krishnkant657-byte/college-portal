@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPS Academy - Faculty Dashboard</title>
+    
+    <!-- Modern Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Light/Monochrome Aesthetic - Unified Theme */
+            --bg-body: #eceef0; /* Soft gray background */
+            --bg-surface: #ffffff; /* Pure white cards and sidebar */
+            --text-primary: #111827; /* Dark black for headings */
+            --text-secondary: #6b7280; /* Medium gray for labels */
+            
+            --accent-primary: #111827; /* Black */
+            --accent-primary-light: #f3f4f6; /* Very light gray for hover */
+            
+            --border-color: #f3f4f6;
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.06);
+            --danger: #ef4444;
+            
+            /* Big, rounded corners everywhere */
+            --radius-card: 24px;
+            --radius-btn: 14px;
+        }
+
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-body); color: var(--text-primary); display: flex; height: 100vh; overflow: hidden; }
+
+        /* ==================== SIDEBAR NAVIGATION ==================== */
+        .sidebar { 
+            width: 260px; 
+            background-color: var(--bg-surface); 
+            display: flex; flex-direction: column; height: 100vh;
+            z-index: 10;
+        }
+        .brand-section {
+            padding: 35px 30px 20px; 
+            font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+        
+        .menu-list { list-style: none; padding: 10px 20px; overflow-y: auto; flex: 1; }
+        .menu-item { margin-bottom: 4px; }
+        .menu-item a {
+            display: flex; align-items: center; padding: 14px 18px; 
+            color: var(--text-secondary); text-decoration: none; 
+            font-size: 0.95rem; font-weight: 500;
+            border-radius: var(--radius-btn); transition: all 0.2s ease;
+        }
+        .menu-item i { width: 24px; font-size: 1.1rem; margin-right: 12px; text-align: center; }
+        
+        /* Interactive Highlight States */
+        .menu-item.active a { 
+            color: var(--text-primary); 
+            font-weight: 700;
+            background-color: transparent;
+        }
+        .menu-item.active i {
+            color: var(--text-primary);
+        }
+        .menu-item a:hover { 
+            background-color: var(--accent-primary-light); 
+            color: var(--text-primary);
+        }
+
+        /* Bottom Menu Options (Logout & Settings) */
+        .bottom-menu { padding: 20px; margin-top: auto; }
+        .bottom-menu .menu-item a { color: var(--text-secondary); font-weight: 600; }
+        .bottom-menu .menu-item a:hover { background-color: var(--accent-primary-light); color: var(--text-primary); }
+
+        /* ==================== MAIN PANEL CANVAS ==================== */
+        .main-panel { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
+
+        /* Upper Header */
+        .top-header {
+            background-color: transparent;
+            height: 100px;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 40px;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* SESSION DROPDOWN */
+        .session-dropdown-wrapper { position: relative; }
+        .session-trigger {
+            color: var(--text-primary); font-size: 0.95rem; font-weight: 500;
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            background-color: var(--bg-surface); padding: 12px 24px; border-radius: 30px;
+            transition: all 0.3s; user-select: none;
+            box-shadow: var(--shadow-md);
+        }
+        .session-trigger i:first-child { color: var(--text-secondary); }
+        .session-trigger:hover { box-shadow: var(--shadow-float); transform: translateY(-1px); }
+        
+        .session-menu {
+            position: absolute; top: calc(100% + 12px); left: 0;
+            background-color: var(--bg-surface); 
+            border-radius: 20px; width: 240px; overflow: hidden; z-index: 100;
+            box-shadow: var(--shadow-float);
+            opacity: 0; transform: translateY(-10px); pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .session-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        
+        .session-option {
+            padding: 14px 24px; font-size: 0.95rem; color: var(--text-secondary); font-weight: 500;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between;
+        }
+        .session-option:hover { background-color: var(--accent-primary-light); color: var(--text-primary); }
+        .session-option.selected { color: var(--text-primary); font-weight: 700; background-color: transparent; }
+
+        /* User Profile Tag */
+        .user-profile-badge { display: flex; align-items: center; gap: 16px; position: relative; }
+        
+        .profile-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%); /* Blue gradient for faculty */
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.2rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-info { display: flex; flex-direction: column; align-items: flex-start; }
+        .user-name { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+        
+        .header-logout-btn {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+            transition: all 0.2s;
+        }
+        .header-logout-btn:hover { color: var(--danger); }
+
+        /* Working Board Interface Area */
+        .workspace-content { flex: 1; padding: 0 40px 40px; overflow-y: auto; }
+        
+        /* Basic Landing View Styles */
+        .welcome-hero { margin-bottom: 25px; display: flex; align-items: center; }
+        .welcome-hero h2 { font-size: 1.8rem; font-weight: 600; color: var(--text-primary); letter-spacing: -0.5px; }
+        
+        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        
+        .card { 
+            background-color: var(--bg-surface); 
+            border-radius: var(--radius-card); 
+            padding: 30px; 
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-float); }
+        
+        .card.card-dark {
+            background-color: var(--text-primary);
+            color: white;
+            background-image: linear-gradient(135deg, #111827 0%, #374151 100%);
+        }
+        .card.card-dark h4 { color: #9ca3af; }
+        .card.card-dark .value { color: white; background: none; -webkit-text-fill-color: white; }
+        
+        .card h4 { font-size: 0.95rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 12px; }
+        .card .value { font-size: 2.2rem; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
+        
+        /* Data Table */
+        .data-table-container { background: var(--bg-surface); border-radius: var(--radius-card); padding: 35px; box-shadow: var(--shadow-md); }
+        .data-table-container h3 { font-size: 1.25rem; margin-bottom: 20px; color: var(--text-primary); font-weight: 700; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border-color); }
+        td { padding: 15px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); font-weight: 500; }
+        
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-success { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .module-card { background: var(--bg-surface); border-radius: var(--radius-card); padding: 35px; box-shadow: var(--shadow-md); }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand-section">
+            IPS Academy
+        </div>
+        
+        <ul class="menu-list">
+            <li class="menu-item active" id="dashboard-nav">
+                <a href="javascript:void(0);" onclick="loadLandingDashboard('dashboard-nav')">
+                    <i class="fa-solid fa-house"></i> Faculty Home
+                </a>
+            </li>
+            
+            <li class="menu-item" id="batches-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'get_faculty_batches' %}', 'batches-nav')">
+                    <i class="fa-solid fa-users-rectangle"></i> Batches
+                </a>
+            </li>
+            
+            <li class="menu-item" id="subjects-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'get_faculty_attendance' %}', 'subjects-nav')">
+                    <i class="fa-solid fa-book"></i> Manage Subjects
+                </a>
+            </li>
+            
+            <li class="menu-item" id="mst-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'get_faculty_mst' %}', 'mst-nav')">
+                    <i class="fa-solid fa-graduation-cap"></i> MST Marks
+                </a>
+            </li>
+            
+            <li class="menu-item" id="assignments-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'faculty_get_assignments' %}', 'assignments-nav')">
+                    <i class="fa-solid fa-book-open"></i> Assignments
+                </a>
+            </li>
+
+            <li class="menu-item" id="timetable-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'faculty_timetable_view' %}', 'timetable-nav')">
+                    <i class="fa-solid fa-calendar-week"></i> My Schedule
+                </a>
+            </li>
+
+            <li class="menu-item" id="leave-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'faculty_leave_view' %}', 'leave-nav')">
+                    <i class="fa-solid fa-paper-plane"></i> Manage Leaves
+                </a>
+            </li>
+            
+            <li class="menu-item" id="attendance-nav">
+                <a href="javascript:void(0);" onclick="loadModule('{% url 'get_faculty_attendance' %}', 'attendance-nav')">
+                    <i class="fa-solid fa-user-check"></i> Mark Attendance
+                </a>
+            </li>
+        </ul>
+        
+        <ul class="menu-list bottom-menu">
+            <li class="menu-item"><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+            <li class="menu-item"><a href="#"><i class="fa-solid fa-headset"></i> Help Center</a></li>
+            <li class="menu-item">
+                <a href="{% url 'logout_view' %}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log out</a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="main-panel">
+        <div style="display:none;">{% csrf_token %}</div>
+        <header class="top-header">
+            <div class="welcome-hero">
+                <h2>Faculty Workspace</h2>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap: 30px;">
+                <!-- Session Dropdown -->
+                <div class="session-dropdown-wrapper">
+                    <div class="session-trigger" id="sessionBtn">
+                        <i class="fa-solid fa-calendar-days"></i> 
+                        <span id="activeSessionText">2026-2027(July-Dec)</span>
+                    </div>
+                    
+                    <div class="session-menu" id="sessionMenu">
+                        <div class="session-option selected" onclick="updateSession('2026-2027(July-Dec)')">2026-2027(July-Dec) <i class="fa-solid fa-check"></i></div>
+                        <div class="session-option" onclick="updateSession('2025-2026(Jan-June)')">2025-2026(Jan-June) <i class="fa-solid fa-check" style="display:none;"></i></div>
+                        <div class="session-option" onclick="updateSession('2025-2026(July-Dec)')">2025-2026(July-Dec) <i class="fa-solid fa-check" style="display:none;"></i></div>
+                    </div>
+                </div>
+
+                <div class="user-profile-badge">
+                    <div class="profile-info">
+                        <span class="user-name">Prof. {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.computer_code }}{% endif %}</span>
+                        <a href="{% url 'logout_view' %}" class="header-logout-btn">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+                        </a>
+                    </div>
+                    <div class="profile-avatar">
+                        {% if user.first_name %}{{ user.first_name|slice:":1" }}{% else %}F{% endif %}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="workspace-content">
+            <div id="landing-dashboard-view" class="animate-fade-in">
+                
+                <div class="dashboard-cards" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+                    <div class="card card-dark" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+                        <h4 style="color: #94a3b8; font-weight: 500; font-size: 0.95rem;">Assigned Subjects</h4>
+                        <div class="value" style="font-size: 2.5rem; margin-top: 15px; font-weight: 700; color: white;">{{ unique_subjects }}</div>
+                        <div class="trend positive" style="margin-top: 10px;"><i class="fa-solid fa-book"></i> Active allocations</div>
+                    </div>
+                    <div class="card" style="border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <h4 style="color: var(--text-secondary); font-weight: 500; font-size: 0.95rem;">Assigned Batches</h4>
+                        <div class="value" style="font-size: 2.5rem; margin-top: 15px; font-weight: 700; color: var(--primary);">{{ unique_batches }}</div>
+                        <div class="trend positive" style="margin-top: 10px; color: #3b82f6;"><i class="fa-solid fa-users-rectangle"></i> Active classes</div>
+                    </div>
+                </div>
+
+                <div class="data-table-container animate-fade-in" style="margin-top: 30px; background: transparent; border: none; padding: 0;">
+                    <h3 style="margin-bottom: 20px; font-size: 1.25rem; font-weight: 600;">Quick Actions</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <button onclick="loadModule('{% url 'get_faculty_mst' %}', 'mst-nav')" style="background: white; color: var(--primary); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: 600; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)';">
+                            <div style="display: flex; flex-direction: column;">
+                                <i class="fa-solid fa-graduation-cap" style="font-size: 2rem; margin-bottom: 12px; color: #8b5cf6;"></i>
+                                Grade MST Marks
+                            </div>
+                            <i class="fa-solid fa-arrow-right" style="color: var(--text-secondary);"></i>
+                        </button>
+                        
+                        <button onclick="loadModule('{% url 'get_faculty_attendance' %}', 'subjects-nav')" style="background: white; color: var(--primary); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: 600; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)';">
+                            <div style="display: flex; flex-direction: column;">
+                                <i class="fa-solid fa-clipboard-user" style="font-size: 2rem; margin-bottom: 12px; color: #3b82f6;"></i>
+                                Mark Attendance
+                            </div>
+                            <i class="fa-solid fa-arrow-right" style="color: var(--text-secondary);"></i>
+                        </button>
+                        
+                        <button onclick="loadModule('{% url 'get_faculty_batches' %}', 'batches-nav')" style="background: white; color: var(--primary); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: 600; text-align: left; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#cbd5e1';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)';">
+                            <div style="display: flex; flex-direction: column;">
+                                <i class="fa-solid fa-users" style="font-size: 2rem; margin-bottom: 12px; color: #10b981;"></i>
+                                View My Batches
+                            </div>
+                            <i class="fa-solid fa-arrow-right" style="color: var(--text-secondary);"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const sessionBtn = document.getElementById('sessionBtn');
+        const sessionMenu = document.getElementById('sessionMenu');
+        const activeSessionText = document.getElementById('activeSessionText');
+        const contentWorkspace = document.querySelector('.workspace-content');
+
+        const landingDashboardHTML = document.getElementById('landing-dashboard-view').outerHTML;
+
+        const savedSession = localStorage.getItem('user_session_tier');
+        if (savedSession) {
+            updateSession(savedSession);
+        }
+
+        sessionBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionMenu.classList.toggle('open');
+        });
+
+        document.addEventListener('click', () => sessionMenu.classList.remove('open'));
+
+        function updateSession(sessionValue) {
+            activeSessionText.innerText = sessionValue;
+            localStorage.setItem('user_session_tier', sessionValue);
+            
+            const options = document.querySelectorAll('.session-option');
+            options.forEach(opt => {
+                const checkIcon = opt.querySelector('.fa-check');
+                if (opt.innerText.trim() === sessionValue) {
+                    opt.classList.add('selected');
+                    checkIcon.style.display = 'inline-block';
+                } else {
+                    opt.classList.remove('selected');
+                    checkIcon.style.display = 'none';
+                }
+            });
+        }
+        
+        function loadModule(targetUrl, navId) {
+            document.querySelectorAll('.menu-list .menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(navId).classList.add('active');
+
+            contentWorkspace.innerHTML = `
+                <div class="animate-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--text-primary); margin-bottom: 16px;"></i>
+                    <h3 style="color: var(--text-secondary); font-weight:600;">Loading...</h3>
+                </div>`;
+
+            fetch(targetUrl)
+                .then(response => {
+                    if(!response.ok) throw new Error("Load failed");
+                    return response.text();
+                })
+                .then(htmlMarkup => {
+                    contentWorkspace.innerHTML = `<div class="module-card animate-fade-in">${htmlMarkup}</div>`;
+                    
+                    const scripts = contentWorkspace.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                        document.body.removeChild(newScript);
+                    });
+                })
+                .catch(err => {
+                    contentWorkspace.innerHTML = `
+                    <div class="module-card animate-fade-in" style="border-color: var(--danger); background-color: rgba(239, 68, 68, 0.05);">
+                        <h3 style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Error Connecting to Module</h3>
+                        <p style="color: var(--text-secondary);">The data could not be retrieved at this time.</p>
+                    </div>`;
+                });
+        }
+
+        function loadLandingDashboard(navId) {
+            document.querySelectorAll('.menu-list .menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(navId).classList.add('active');
+            contentWorkspace.innerHTML = landingDashboardHTML;
+        }
+    </script>
+</body>
+</html>

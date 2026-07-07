@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div class="card card-primary card-outline" style="max-width: 600px; margin: 40px auto; padding: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Bulk Upload Students to {{ batch.name }}</h3>
+    </div>
+    <div class="card-body">
+        <p>Please upload a <strong>.csv</strong> file to instantly create and assign students to this batch.</p>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid #17a2b8;">
+            <strong>Expected CSV Format (Columns):</strong>
+            <ol style="margin-top: 10px; margin-bottom: 0;">
+                <li>Computer Code (Required)</li>
+                <li>First Name (Required)</li>
+                <li>Last Name (Required)</li>
+                <li>Enrollment Number (Required)</li>
+                <li>Password (Optional - defaults to 123456)</li>
+            </ol>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="csv_file" style="font-weight: bold; display: block; margin-bottom: 10px;">Select CSV File:</label>
+                <input type="file" name="csv_file" accept=".csv" required class="form-control-file" style="border: 1px solid #ccc; padding: 10px; width: 100%; border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button type="submit" class="btn btn-success" style="padding: 8px 20px; font-size: 1rem; border-radius: 4px; cursor: pointer; border: none; background: #28a745; color: white;">&#128193; Upload CSV</button>
+                <a href="/admin/portal/batch/{{ batch.id }}/change/" class="btn btn-secondary" style="padding: 8px 20px; font-size: 1rem; border-radius: 4px; text-decoration: none; border: 1px solid #6c757d; color: #6c757d;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

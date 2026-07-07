@@ -1,0 +1,38 @@
+<div class="animate-fade-in" style="background-color: var(--bg-surface); padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 550px; margin: 40px auto; text-align: center; border: 1px solid var(--border-color);">
+    
+    <div style="width: 80px; height: 80px; background-color: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 2.5rem; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <i class="fa-solid fa-check"></i>
+    </div>
+    
+    <h2 style="color: var(--text-primary); font-size: 1.8rem; font-weight: 800; margin-bottom: 10px;">Payment Successful!</h2>
+    <p style="color: var(--text-secondary); font-size: 1rem; line-height: 1.5; margin-bottom: 30px;">
+        Your payment of <strong>₹ 2,450.00</strong> was processed securely. Your {{ record.form_type }} Examination Form has been officially submitted to IPS Academy.
+    </p>
+
+    <div style="background-color: var(--bg-body); padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: var(--text-secondary); font-weight: 500;">Transaction ID</span>
+            <span style="color: var(--text-primary); font-weight: 600; font-family: monospace;">TXN-{{ record.id }}98472</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="color: var(--text-secondary); font-weight: 500;">Form Status</span>
+            <span style="color: #10b981; font-weight: 700;">Submitted To IPS Academy</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary); font-weight: 500;">Payment Status</span>
+            <span style="color: #10b981; font-weight: 700;">Successful</span>
+        </div>
+    </div>
+
+    <button onclick="loadModule('{% if record.form_type == 'Regular' %}{% url 'exam_form_regular' %}{% else %}{% url 'exam_form_atkt' %}{% endif %}', this)" style="background-color: var(--bg-body); color: var(--text-primary); border: 1px solid var(--border-color); padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-arrow-left"></i> Return to Dashboard
+    </button>
+</div>
+
+<style>
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        80% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>

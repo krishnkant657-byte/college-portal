@@ -1,0 +1,146 @@
+<div class="welcome-hero animate-fade-in">
+    <h2>MST Marks Management</h2>
+    <p>Select an assigned batch and subject to enter Mid-Semester Test scores.</p>
+</div>
+
+<div class="module-card animate-fade-in" style="margin-bottom: 20px;">
+    <div style="display: flex; gap: 20px; align-items: flex-end;">
+        <div style="flex: 1;">
+            <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; font-size: 0.85rem; text-transform: uppercase;">Select Assignment</label>
+            <select id="allocationSelect" style="width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif; font-size: 1rem; color: var(--text-primary); background: var(--bg-body);">
+                <option value="">-- Choose Subject & Batch --</option>
+                {% for allocation in allocations %}
+                <option value="{{ allocation.id }}" {% if selected_allocation.id == allocation.id %}selected{% endif %}>
+                    {{ allocation.subject.name }} ({{ allocation.batch.name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button onclick="loadAllocation()" style="background: var(--primary, #111827); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                Load Students
+            </button>
+        </div>
+    </div>
+</div>
+
+{% if success %}
+<div class="animate-fade-in" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #047857; font-weight: 500;">
+    <i class="fa-solid fa-check-circle"></i> Marks saved successfully!
+</div>
+{% endif %}
+
+{% if selected_allocation %}
+<div class="card animate-fade-in" style="background: var(--bg-surface); padding: 25px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;">
+    <h3 style="margin-bottom: 15px; color: var(--text-primary); font-size: 1.1rem;"><i class="fa-solid fa-file-csv" style="color: #10b981; margin-right: 8px;"></i> Bulk CSV Upload</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Upload a CSV file to instantly populate marks for this batch. Format: <strong>Computer Code, MST 1 Marks, MST 2 Marks</strong>.</p>
+    
+    <form id="csvUploadForm" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center;">
+        {% csrf_token %}
+        <input type="hidden" name="allocation_id" value="{{ selected_allocation.id }}">
+        <input type="file" name="csv_file" accept=".csv" required style="padding: 10px; border: 1px dashed var(--border-color); border-radius: 6px; background: var(--bg-body); cursor: pointer; flex: 1;">
+        <button type="button" onclick="uploadCSV()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i> Upload & Process
+        </button>
+    </form>
+</div>
+
+<div class="data-table-container animate-fade-in">
+    <h3>Roster: {{ selected_allocation.batch.name }}</h3>
+    <form id="mstForm">
+        {% csrf_token %}
+        <input type="hidden" name="allocation_id" value="{{ selected_allocation.id }}">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">Code</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">Student Name</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">MST-1 [Max: 10]</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">MST-2 [Max: 15]</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in students_data %}
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 600;">{{ data.student.computer_code }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ data.student.first_name }} {{ data.student.last_name }}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                        <input type="number" step="0.1" min="0" max="10" name="student_{{ data.student.id }}_mst1" value="{{ data.mst_1|default_if_none:'' }}" style="width: 70px; padding: 6px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;">
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                        <input type="number" step="0.1" min="0" max="15" name="student_{{ data.student.id }}_mst2" value="{{ data.mst_2|default_if_none:'' }}" style="width: 70px; padding: 6px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit;">
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 30px; color: var(--text-secondary);">No students found in this batch.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; text-align: right;">
+            <button type="button" onclick="saveMarks()" style="background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; font-size: 1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                <i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i> Save All Marks
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<script>
+    function loadAllocation() {
+        const allocId = document.getElementById('allocationSelect').value;
+        if (allocId) {
+            loadModule('{% url "get_faculty_mst" %}?allocation_id=' + allocId, 'mst-nav');
+        }
+    }
+    
+    function saveMarks() {
+        const form = document.getElementById('mstForm');
+        const formData = new FormData(form);
+        
+        fetch('{% url "save_mst_marks" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if(response.ok) {
+                // If it successfully redirected or responded, reload the module view to show success message
+                loadModule('{% url "get_faculty_mst" %}?allocation_id=' + formData.get('allocation_id') + '&success=1', 'mst-nav');
+            } else {
+                alert("An error occurred while saving marks.");
+            }
+        });
+    }
+
+    function uploadCSV() {
+        const form = document.getElementById('csvUploadForm');
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput.value) {
+            alert("Please select a CSV file first.");
+            return;
+        }
+
+        const formData = new FormData(form);
+        
+        fetch('{% url "upload_mst_csv" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if(response.ok) {
+                // Reload the module to show the new marks and success message
+                loadModule('{% url "get_faculty_mst" %}?allocation_id=' + formData.get('allocation_id') + '&success=CSV Uploaded Successfully', 'mst-nav');
+            } else {
+                alert("An error occurred during CSV upload.");
+            }
+        });
+    }
+</script>

@@ -1,0 +1,141 @@
+<div class="welcome-hero animate-fade-in" style="margin-bottom: 25px;">
+    <h2>Manage Leaves</h2>
+    <p>Review and approve leave applications from students in your batches.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 30px;" class="animate-fade-in">
+    <!-- Pending Leaves -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-hourglass-half" style="color: #f59e0b; margin-right: 8px;"></i> Action Required</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Student</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Duration</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Reason</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in pending_leaves %}
+                <tr style="border-bottom: 1px solid var(--border-color);" id="leave-row-{{ leave.id }}">
+                    <td style="padding: 15px 10px; font-weight: 600; color: var(--text-primary);">
+                        {{ leave.student.first_name }} {{ leave.student.last_name }}
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">{{ leave.student.computer_code }}</div>
+                    </td>
+                    <td style="padding: 15px 10px; color: var(--text-secondary); font-size: 0.9rem;">
+                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}
+                    </td>
+                    <td style="padding: 15px 10px; color: var(--text-primary); font-size: 0.9rem;">
+                        {{ leave.reason }}
+                        {% if leave.document %}
+                        <div style="margin-top: 5px;">
+                            <a href="{{ leave.document.url }}" target="_blank" style="color: var(--primary); font-size: 0.8rem; text-decoration: none;"><i class="fa-solid fa-paperclip"></i> View Document</a>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 15px 10px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
+                        <button onclick="processLeave({{ leave.id }}, 'Approve')" style="background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s; font-size: 0.85rem;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                            <i class="fa-solid fa-check"></i> Approve
+                        </button>
+                        <button onclick="processLeave({{ leave.id }}, 'Reject')" style="background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s; font-size: 0.85rem;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                            <i class="fa-solid fa-xmark"></i> Reject
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 40px; text-align: center; color: var(--text-secondary);">
+                        <i class="fa-regular fa-circle-check" style="font-size: 2rem; margin-bottom: 10px; color: #10b981; opacity: 0.8;"></i>
+                        <br>All caught up! No pending leave requests.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Recently Reviewed -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--text-secondary); margin-right: 8px;"></i> Recently Reviewed</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Student</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Reason</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in reviewed_leaves %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 15px 10px; font-weight: 600; color: var(--text-primary);">
+                        {{ leave.student.first_name }} {{ leave.student.last_name }}
+                    </td>
+                    <td style="padding: 15px 10px; color: var(--text-secondary); font-size: 0.9rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ leave.reason }}
+                    </td>
+                    <td style="padding: 15px 10px; text-align: right;">
+                        {% if leave.status == 'Approved' %}
+                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Approved</span>
+                        {% elif leave.status == 'Rejected' %}
+                        <span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Rejected</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 30px; text-align: center; color: var(--text-secondary);">No recently reviewed applications.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function processLeave(leaveId, action) {
+    if(!confirm("Are you sure you want to " + action + " this leave request?")) return;
+    
+    const formData = new FormData();
+    formData.append('action', action);
+    
+    // get csrf token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : getCookie('csrftoken');
+    
+    fetch('/process-leave-action/' + leaveId + '/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            // Reload module
+            loadModule('{% url "faculty_leave_view" %}', 'leave-nav');
+        } else {
+            alert("Error: " + data.message);
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>

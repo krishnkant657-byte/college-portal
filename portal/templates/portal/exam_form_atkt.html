@@ -1,0 +1,225 @@
+{% if success %}
+<div style="background-color: #d1fae5; color: #065f46; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; text-align: center;">
+    <i class="fa-solid fa-circle-check"></i> Examination Form Submitted Successfully!
+</div>
+{% endif %}
+
+<div class="exam-form-header" style="margin-bottom: 20px;">
+    <h3 style="margin-bottom: 0;"><i class="fa-solid fa-file-invoice" style="color:var(--text-secondary); margin-right:8px;"></i> ATKT Exam Form</h3>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">View your eligibility for ATKT semester examination.</p>
+</div>
+
+{% if not record %}
+<!-- Alert Notice if no ATKT Record exists -->
+<div style="background-color: var(--bg-body); border: 1px solid var(--border-color); padding: 40px; border-radius: 12px; margin-top: 30px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+    <h2 style="color: var(--text-primary); font-size: 1.5rem; font-weight: 500;">
+        <span style="color: var(--danger); font-weight: 700;">NOTE:-</span> You are not Eligible for ATKT Examination.
+    </h2>
+</div>
+{% else %}
+
+<!-- Alert Notice -->
+<div style="background-color: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); padding: 15px 20px; border-radius: 0 12px 12px 0; margin-bottom: 30px;">
+    <h4 style="color: var(--danger); margin-bottom: 8px; font-size: 0.95rem;"><i class="fa-solid fa-circle-exclamation"></i> Important Notice Regarding Online Payment through Online Mode</h4>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0;">
+        • In case your current payment transaction is showing the status as "failed transaction" and the amount gets deducted from your account and Examination Form status is still showing "Forwarded By the Institution". Please wait, do not re-submit your examination or do not make another payment.<br>
+        Since your Examination Fees has been deducted from your account, your examination form will be forwarded automatically to IPS Academy with an update in your account as "Submitted To IPS Academy" in next working day.<br>
+        In case you need further support reach to Help & Support.<br>
+        *** For the online submission of students examination form, First the Institution has to be forward the students examination form, then it will be available to student for online submission. once the students will submit their examination form online, it will be forwarded to institution.
+    </p>
+</div>
+
+<!-- Form Prerequisites -->
+<div style="margin-bottom: 30px;">
+    <h4 style="font-size: 1.1rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">Exam Form Prerequisites</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Enrollment Number</span>
+            <div style="font-weight: 600; color: var(--text-primary);">{% if profile.enrollment_number %}{{ profile.enrollment_number }}{% else %}<span style="color:#ef4444;">Not Provided</span>{% endif %}</div>
+        </div>
+        <div>
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600;">Examination Session</span>
+            <div style="font-weight: 600; color: var(--text-primary);">{{ record.session }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Personal Details -->
+<div style="margin-bottom: 30px;">
+    <h4 style="font-size: 1.1rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">Student Personal Detail</h4>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; row-gap: 15px;">
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Name:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Father Name:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.father_name %}{{ profile.father_name }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Mother Name:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.mother_name %}{{ profile.mother_name }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Degree:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.degree %}{{ profile.degree }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Branch:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.branch %}{{ profile.branch }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Sex:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.sex %}{{ profile.sex }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">City:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.city %}{{ profile.city }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Address:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.address %}{{ profile.address }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Pin-code:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.pin_code %}{{ profile.pin_code }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">State:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.state %}{{ profile.state }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Admission Year:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.admission_year %}{{ profile.admission_year }}{% else %}-{% endif %}</span>
+        </div>
+        <div style="display: flex;">
+            <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; width: 120px;">Mobile:</span>
+            <span style="color: var(--text-primary); font-weight: 500;">{% if profile.mobile %}{{ profile.mobile }}{% else %}-{% endif %}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Student Current Status Table -->
+<div style="margin-bottom: 40px;">
+    <h4 style="font-size: 1.1rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">Student Current Status:</h4>
+    
+    <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="background-color: var(--bg-body); border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 12px 15px; font-weight: 600; color: var(--text-secondary);">Select</th>
+                    <th style="padding: 12px 15px; font-weight: 600; color: var(--text-secondary);">Enrollment No.</th>
+                    <th style="padding: 12px 15px; font-weight: 600; color: var(--text-secondary);">Status</th>
+                    <th style="padding: 12px 15px; font-weight: 600; color: var(--text-secondary);">Exam Form Status</th>
+                    <th style="padding: 12px 15px; font-weight: 600; color: var(--text-secondary);">Payment Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 15px;"><input type="checkbox" checked disabled></td>
+                    <td style="padding: 15px; font-weight: 500;">{% if profile.enrollment_number %}{{ profile.enrollment_number }}{% else %}-{% endif %}</td>
+                    <td style="padding: 15px;">ATKT</td>
+                    
+                    {% if record.form_status == 'Submitted To IPS Academy' or record.form_status == 'Forwarded by Institution' or record.form_status == 'Forwarded By the Institution' %}
+                    <td style="padding: 15px; font-weight: 600; color: #10b981;">{{ record.form_status }}</td>
+                    {% else %}
+                    <td style="padding: 15px; font-weight: 600; color: var(--danger);">{{ record.form_status }}</td>
+                    {% endif %}
+                    
+                    {% if record.payment_status == 'Payment Closed.' or record.payment_status == 'Payment Closed' %}
+                    <td style="padding: 15px; font-weight: 600; color: var(--danger);">{{ record.payment_status }}</td>
+                    {% else %}
+                    <td style="padding: 15px; font-weight: 600; color: #10b981;">{{ record.payment_status }}</td>
+                    {% endif %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Interactive Verification Form (Bottom of page) -->
+{% if record.form_status != 'Submitted To IPS Academy' %}
+<div style="background-color: var(--bg-body); padding: 25px; border-radius: var(--radius-card); margin-top: 30px;">
+    <h3 style="color: #ea580c; font-size: 1.4rem; font-weight: 600; margin-bottom: 20px;">Verify Personal Details :</h3>
+    
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; max-width: 600px;">
+        <div style="display: flex; align-items: center;">
+            <label style="width: 180px; font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">Student Name:</label>
+            <input type="text" value="{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% endif %}" readonly style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-surface); color: var(--text-primary); font-family: 'Outfit';">
+        </div>
+        <div style="display: flex; align-items: center;">
+            <label style="width: 180px; font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">Student Father Name:</label>
+            <input type="text" value="{% if profile.father_name %}{{ profile.father_name }}{% endif %}" readonly style="flex: 1; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-surface); color: var(--text-primary); font-family: 'Outfit';">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary);">Student Permanent Address:</label>
+            <textarea readonly style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-surface); color: var(--text-primary); font-family: 'Outfit'; resize: none;">{% if profile.address %}{{ profile.address }}{% endif %}</textarea>
+        </div>
+    </div>
+    
+    <!-- Submission Form via AJAX -->
+    <form id="atktExamSubmitForm" onsubmit="submitAtktExamForm(event)">
+        {% csrf_token %}
+        
+        <div id="atkt-forward-error-message" style="display: {% if error %}block{% else %}none{% endif %}; background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
+            <i class="fa-solid fa-triangle-exclamation"></i> {% if error %}{{ error }}{% else %}Not forwarded by the institution.{% endif %}
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <input type="checkbox" id="verification_agree" required style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="verification_agree" style="font-size: 0.9rem; cursor: pointer;">
+                <span style="color: var(--danger); font-weight: 700;">Important:-</span> 
+                <span style="color: var(--text-primary); font-weight: 500;">I agree to the above details are correct and Degree will be posted on above address</span>
+            </label>
+        </div>
+        
+        <button type="submit" style="background-color: #4ade80; color: #064e3b; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(74, 222, 128, 0.2);">
+            Submit
+        </button>
+    </form>
+</div>
+{% endif %}
+{% endif %}
+
+<script>
+    function submitAtktExamForm(e) {
+        e.preventDefault(); // Prevent standard page reload
+        
+        const isForwarded = {% if record.form_status == 'Forwarded by Institution' or record.form_status == 'Forwarded By the Institution' %}true{% else %}false{% endif %};
+        if (!isForwarded) {
+            const errorDiv = document.getElementById('atkt-forward-error-message');
+            if (errorDiv) {
+                errorDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Exam form not submitted by the institution yet.';
+                errorDiv.style.display = 'block';
+            }
+            return;
+        }
+        
+        const form = document.getElementById('atktExamSubmitForm');
+        const formData = new FormData(form);
+        
+        const contentWorkspace = document.querySelector('.workspace-content');
+        
+        contentWorkspace.innerHTML = `
+            <div class="animate-fade-in" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--text-primary); margin-bottom: 16px;"></i>
+                <h3 style="color: var(--text-secondary); font-weight:600;">Submitting...</h3>
+            </div>`;
+            
+        fetch('{% url "exam_form_atkt" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(htmlMarkup => {
+            contentWorkspace.innerHTML = `<div class="module-card animate-fade-in">${htmlMarkup}</div>`;
+        })
+        .catch(err => {
+            console.error(err);
+        });
+    }
+</script>

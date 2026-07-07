@@ -1,0 +1,80 @@
+<div class="welcome-hero animate-fade-in" style="margin-bottom: 25px;">
+    <h2>Leave Application</h2>
+    <p>Submit a digital leave request to your coordinator and track its status.</p>
+</div>
+
+{% if request.GET.success %}
+<div class="animate-fade-in" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 15px; margin-bottom: 20px; border-radius: 4px; color: #047857; font-weight: 500;">
+    <i class="fa-solid fa-check-circle"></i> Leave Application submitted successfully!
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;" class="animate-fade-in">
+    <!-- Apply for Leave Form -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-paper-plane" style="color: var(--primary); margin-right: 8px;"></i> New Application</h3>
+        
+        <form method="POST" action="{% url 'student_leave_view' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Start Date</label>
+                <input type="date" name="start_date" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); font-family: inherit;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">End Date</label>
+                <input type="date" name="end_date" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); font-family: inherit;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Reason</label>
+                <textarea name="reason" rows="4" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); font-family: inherit; resize: vertical;" placeholder="Briefly explain your reason for leave..."></textarea>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Medical Certificate (Optional)</label>
+                <input type="file" name="document" accept=".pdf,.jpg,.png" style="width: 100%; padding: 10px; border: 1px dashed var(--border-color); border-radius: 6px; background: var(--bg-body);">
+            </div>
+            <button type="submit" style="width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                Submit Application
+            </button>
+        </form>
+    </div>
+
+    <!-- Past Applications -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i> My Applications</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Date Range</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Reason</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in leaves %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 15px 10px; font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">
+                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d, Y" }}
+                    </td>
+                    <td style="padding: 15px 10px; color: var(--text-secondary); font-size: 0.9rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ leave.reason }}
+                    </td>
+                    <td style="padding: 15px 10px; text-align: right;">
+                        {% if leave.status == 'Pending' %}
+                        <span style="background: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Pending</span>
+                        {% elif leave.status == 'Approved' %}
+                        <span style="background: #10b981; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Approved</span>
+                        {% elif leave.status == 'Rejected' %}
+                        <span style="background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Rejected</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 30px; text-align: center; color: var(--text-secondary);">You haven't submitted any leave applications yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

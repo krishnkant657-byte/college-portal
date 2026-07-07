@@ -1,0 +1,153 @@
+<div class="welcome-hero animate-fade-in" style="margin-bottom: 25px;">
+    <h2>CGPA & SGPA Goal Tracker</h2>
+    <p>Project your semester SGPA and calculate what you need to hit your target CGPA.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;" class="animate-fade-in">
+    <!-- SGPA Predictor -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-calculator" style="color: var(--primary); margin-right: 8px;"></i> Semester SGPA Predictor</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Enter your expected grades and credits for your current subjects to project your SGPA.</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;" id="sgpa-table">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Subject</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; width: 80px;">Credits</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; width: 100px;">Expected</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in subjects %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px 10px; color: var(--text-primary); font-size: 0.95rem;">{{ subject.name }}</td>
+                    <td style="padding: 12px 10px;">
+                        <input type="number" class="sgpa-credit" value="4" min="1" max="6" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;" onchange="calculateSGPA()">
+                    </td>
+                    <td style="padding: 12px 10px;">
+                        <select class="sgpa-grade" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);" onchange="calculateSGPA()">
+                            <option value="10">O (10)</option>
+                            <option value="9">A+ (9)</option>
+                            <option value="8" selected>A (8)</option>
+                            <option value="7">B+ (7)</option>
+                            <option value="6">B (6)</option>
+                            <option value="5">C (5)</option>
+                            <option value="4">P (4)</option>
+                            <option value="0">F (0)</option>
+                        </select>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" style="padding: 20px; text-align: center; color: var(--text-secondary);">No subjects mapped to your batch.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="background: var(--accent-primary-light); padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600; color: var(--text-secondary);">Projected SGPA:</span>
+            <span id="projected-sgpa" style="font-size: 2rem; font-weight: 800; color: var(--text-primary);">8.00</span>
+        </div>
+    </div>
+
+    <!-- CGPA Goal Setter -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-bullseye" style="color: var(--primary); margin-right: 8px;"></i> CGPA Goal Setter</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Calculate the average SGPA you need in your remaining semesters to hit your target CGPA.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;">
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem;">Total Semesters</label>
+                <input type="number" id="total-sems" value="8" min="1" max="8" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;" oninput="calculateGoal()">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem;">Semesters Completed</label>
+                <input type="number" id="completed-sems" value="3" min="0" max="8" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;" oninput="calculateGoal()">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); font-size: 0.9rem;">Current CGPA</label>
+                <input type="number" id="current-cgpa" value="7.5" step="0.01" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: 'Outfit', sans-serif;" oninput="calculateGoal()">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--text-primary); font-size: 1rem;">Target Final CGPA</label>
+                <input type="number" id="target-cgpa" value="8.0" step="0.01" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid var(--primary); background: #f0f9ff; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--text-primary);" oninput="calculateGoal()">
+            </div>
+        </div>
+        
+        <div id="goal-result-box" style="background: var(--accent-primary-light); padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="font-weight: 600; color: var(--text-secondary); margin-bottom: 5px;">Required Average SGPA</div>
+            <div id="required-sgpa" style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">8.30</div>
+            <div id="goal-message" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">for the remaining 5 semesters.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateSGPA() {
+        const credits = document.querySelectorAll('.sgpa-credit');
+        const grades = document.querySelectorAll('.sgpa-grade');
+        
+        let totalPoints = 0;
+        let totalCredits = 0;
+        
+        for(let i=0; i<credits.length; i++) {
+            const c = parseFloat(credits[i].value) || 0;
+            const g = parseFloat(grades[i].value) || 0;
+            totalPoints += (c * g);
+            totalCredits += c;
+        }
+        
+        const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0.00;
+        document.getElementById('projected-sgpa').innerText = sgpa;
+    }
+
+    function calculateGoal() {
+        let totalSemsEl = document.getElementById('total-sems');
+        let completedSemsEl = document.getElementById('completed-sems');
+        
+        // Cap values to max 8
+        if(parseInt(totalSemsEl.value) > 8) totalSemsEl.value = 8;
+        if(parseInt(completedSemsEl.value) > 8) completedSemsEl.value = 8;
+        if(parseInt(completedSemsEl.value) > parseInt(totalSemsEl.value)) completedSemsEl.value = totalSemsEl.value;
+
+        const totalSems = parseInt(totalSemsEl.value) || 0;
+        const completedSems = parseInt(completedSemsEl.value) || 0;
+        const currentCGPA = parseFloat(document.getElementById('current-cgpa').value) || 0;
+        const targetCGPA = parseFloat(document.getElementById('target-cgpa').value) || 0;
+        
+        const remainingSems = totalSems - completedSems;
+        const resultBox = document.getElementById('goal-result-box');
+        const reqSgpaEl = document.getElementById('required-sgpa');
+        const msgEl = document.getElementById('goal-message');
+        
+        if (remainingSems <= 0) {
+            reqSgpaEl.innerText = "N/A";
+            msgEl.innerText = "No semesters remaining.";
+            reqSgpaEl.style.color = "var(--text-secondary)";
+            return;
+        }
+        
+        // Calculation: (Target * Total) = (Current * Completed) + (Required * Remaining)
+        const requiredTotalPoints = (targetCGPA * totalSems);
+        const currentTotalPoints = (currentCGPA * completedSems);
+        const neededPoints = requiredTotalPoints - currentTotalPoints;
+        
+        const requiredSGPA = (neededPoints / remainingSems).toFixed(2);
+        
+        reqSgpaEl.innerText = requiredSGPA;
+        msgEl.innerText = `for the remaining ${remainingSems} semester(s).`;
+        
+        if (requiredSGPA > 10) {
+            reqSgpaEl.style.color = "#ef4444"; // Red for impossible
+            msgEl.innerText = `Impossible! Max SGPA is 10.0.`;
+        } else if (requiredSGPA <= 0) {
+            reqSgpaEl.style.color = "#10b981"; // Green for very easy
+            msgEl.innerText = `You've practically already achieved it!`;
+        } else {
+            reqSgpaEl.style.color = "var(--primary)"; // Normal blue/brand color
+        }
+    }
+    
+    // Initialize
+    calculateSGPA();
+    calculateGoal();
+</script>

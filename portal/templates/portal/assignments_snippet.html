@@ -1,0 +1,178 @@
+<div class="welcome-hero animate-fade-in" style="margin-bottom: 25px;">
+    <h2>One-Click Assignment Workspace</h2>
+    <p>View instructions, write your code, and submit directly from your browser.</p>
+</div>
+
+<div style="display: grid; gap: 25px;">
+    {% for assignment in assignments %}
+    {% with sub=assignment.sub %}
+    <div class="card animate-fade-in" style="background: var(--bg-surface); padding: 25px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 4px solid {% if sub %}#10b981{% elif now > assignment.due_date %}#ef4444{% else %}var(--primary){% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <div>
+                <h3 style="margin: 0 0 5px 0; color: var(--text-primary); font-size: 1.3rem;">{{ assignment.title }}</h3>
+                <div style="color: var(--text-secondary); font-size: 0.95rem;">
+                    <strong>{{ assignment.subject.name }}</strong> | By: {{ assignment.faculty.first_name }} {{ assignment.faculty.last_name }} | Points: {{ assignment.points }}
+                </div>
+            </div>
+            
+            <div style="text-align: right;">
+                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Deadline</div>
+                <div style="font-weight: 600; color: {% if sub %}#10b981{% elif now > assignment.due_date %}#ef4444{% else %}var(--text-primary){% endif %};">
+                    {{ assignment.due_date|date:"M d, Y h:i A" }}
+                </div>
+                
+                {% if not sub and now < assignment.due_date %}
+                <div class="countdown-timer" data-deadline="{{ assignment.due_date|date:'Y-m-d\\TH:i:s' }}" style="background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-top: 5px; display: inline-block;">
+                    <i class="fa-solid fa-clock"></i> <span class="time-left">Calculating...</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary); border: 1px solid var(--border-color);">
+            <strong style="color: var(--text-primary); display: block; margin-bottom: 8px;">Instructions:</strong>
+            {{ assignment.description|linebreaksbr }}
+            
+            {% if assignment.document %}
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <a href="{{ assignment.document.url }}" target="_blank" download style="display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);">
+                    <i class="fa-solid fa-file-pdf" style="margin-right: 8px;"></i> Download Attached PDF
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if sub %}
+        <!-- Submitted State -->
+        <div style="background: #ecfdf5; border: 1px solid #10b981; padding: 15px; border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin: 0; color: #047857;"><i class="fa-solid fa-circle-check"></i> Submitted Successfully</h4>
+                <span style="font-size: 0.85rem; color: #047857;">{{ sub.submitted_at|date:"M d, Y h:i A" }}</span>
+            </div>
+            {% if sub.marks_awarded %}
+            <div style="font-weight: 700; color: var(--primary); font-size: 1.1rem; margin-top: 10px;">
+                Grade: {{ sub.marks_awarded }} / {{ assignment.points }}
+            </div>
+            {% else %}
+            <div style="font-size: 0.9rem; color: #047857;">Waiting for faculty to grade.</div>
+            {% endif %}
+            <button type="button" onclick="document.getElementById('viewSubmission{{ assignment.id }}').style.display='block'" style="background: none; border: none; color: #047857; text-decoration: underline; cursor: pointer; padding: 0; font-family: 'Outfit', sans-serif; margin-top: 10px;">View your submission</button>
+            <div id="viewSubmission{{ assignment.id }}" style="display: none; margin-top: 15px; background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; font-size: 0.9rem; max-height: 200px; overflow-y: auto;">{{ sub.content }}</div>
+        </div>
+        {% elif now > assignment.due_date %}
+        <!-- Missed Deadline State -->
+        <div style="background: #fef2f2; border: 1px solid #ef4444; padding: 15px; border-radius: 8px; color: #b91c1c;">
+            <i class="fa-solid fa-triangle-exclamation"></i> The deadline for this assignment has passed. You can no longer submit.
+        </div>
+        {% else %}
+        <!-- Action State -->
+        <button type="button" onclick="toggleWorkspace('{{ assignment.id }}')" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: all 0.2s;">
+            <i class="fa-solid fa-terminal" style="margin-right: 8px;"></i> Open Workspace
+        </button>
+        
+        <div id="workspace{{ assignment.id }}" style="display: none; margin-top: 20px;">
+            <form onsubmit="submitAssignment(event, '{{ assignment.id }}')">
+                {% csrf_token %}
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Your Answer / Code:</label>
+                <textarea id="content{{ assignment.id }}" required rows="10" placeholder="Type your code or answer here..." style="width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background: #1e1e1e; color: #d4d4d4; font-family: monospace; font-size: 0.95rem; resize: vertical; margin-bottom: 15px; box-sizing: border-box;"></textarea>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 15px;">
+                    <button type="button" onclick="toggleWorkspace('{{ assignment.id }}')" style="background: white; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: 'Outfit', sans-serif;">Cancel</button>
+                    <button type="submit" id="btnSubmit{{ assignment.id }}" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);">
+                        <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    {% endwith %}
+    {% empty %}
+    <div style="text-align: center; padding: 50px; color: var(--text-secondary); background: white; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <i class="fa-solid fa-party-horn" style="font-size: 3rem; margin-bottom: 15px; color: var(--primary);"></i>
+        <h3 style="margin: 0 0 10px 0; color: var(--text-primary);">All Caught Up!</h3>
+        <p style="margin: 0;">You have no active assignments right now.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Initialize Countdown Timers
+    window.updateTimers = function() {
+        document.querySelectorAll('.countdown-timer').forEach(el => {
+            const deadline = new Date(el.dataset.deadline).getTime();
+            const now = new Date().getTime();
+            const distance = deadline - now;
+            
+            if (distance < 0) {
+                el.querySelector('.time-left').innerText = "EXPIRED";
+                el.style.background = "#fef2f2";
+                el.style.color = "#b91c1c";
+                return;
+            }
+            
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            let text = "";
+            if (days > 0) text += days + "d ";
+            text += hours + "h " + minutes + "m " + seconds + "s";
+            
+            el.querySelector('.time-left').innerText = text;
+            
+            // Turn red if less than 1 hour
+            if (days === 0 && hours === 0) {
+                el.style.background = "#fef2f2";
+                el.style.color = "#ef4444";
+            }
+        });
+    }
+    
+    // Run timer immediately and every second
+    window.updateTimers();
+    if(window.assignmentTimerInterval) clearInterval(window.assignmentTimerInterval);
+    window.assignmentTimerInterval = setInterval(window.updateTimers, 1000);
+
+    window.toggleWorkspace = function(id) {
+        const ws = document.getElementById('workspace' + id);
+        ws.style.display = ws.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    window.submitAssignment = function(event, id) {
+        event.preventDefault();
+        const btn = document.getElementById('btnSubmit' + id);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+        btn.disabled = true;
+        
+        const content = document.getElementById('content' + id).value;
+        const formData = new FormData();
+        formData.append('assignment_id', id);
+        formData.append('content', content);
+        // csrf_token from page
+        
+        fetch('{% url "student_submit_assignment" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => {
+            if(response.ok) {
+                // Reload assignments tab
+                loadModule('{% url "get_assignments_data" %}', 'assignments-nav');
+            } else {
+                return response.text().then(text => { throw new Error(text) });
+            }
+        })
+        .catch(err => {
+            alert("Error: " + err.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+</script>

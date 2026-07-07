@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var forms = document.getElementsByTagName('form');
+            for (var f = 0; f < forms.length; f++) {
+                var form = forms[f];
+                // Target fields that usually trigger autofill
+                var inputs = form.querySelectorAll('input[type="text"], input[type="email"], input:not([type])');
+                
+                for (var i = 0; i < inputs.length; i++) {
+                    var input = inputs[i];
+                    var originalName = input.getAttribute('name');
+                    
+                    if (originalName) {
+                        // Strip the name attribute completely so the browser's autofill engine cannot identify what the field is
+                        input.setAttribute('data-real-name', originalName);
+                        input.setAttribute('name', 'obfuscated_' + Math.random().toString(36).substring(7));
+                    }
+                }
+                
+                // Right before the form saves, instantly put the real names back so Django can process the data
+                form.addEventListener('submit', function() {
+                    var hiddenInputs = this.querySelectorAll('input[data-real-name]');
+                    for (var i = 0; i < hiddenInputs.length; i++) {
+                        hiddenInputs[i].setAttribute('name', hiddenInputs[i].getAttribute('data-real-name'));
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

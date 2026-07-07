@@ -1,0 +1,61 @@
+<div class="welcome-hero animate-fade-in">
+    <h2>Academic Attendance Registry</h2>
+    <p>Detailed performance logs for the current active semester tier.</p>
+</div>
+
+<style>
+    .attendance-sheet { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; }
+    .attendance-sheet th { padding: 16px; background-color: #1e293b; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: left; }
+    .attendance-sheet td { padding: 16px; color: #cbd5e1; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
+    .attendance-sheet tr:last-child td { border-bottom: none; }
+    .progress-bar-bg { background-color: #1e293b; width: 100%; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+    .progress-fill { background: linear-gradient(90deg, #f97316, #ef4444); height: 100%; border-radius: 4px; }
+    .badge-alert { color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .badge-good { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+</style>
+
+<table class="attendance-sheet">
+    <thead>
+        <tr>
+            <th>Subject Name</th>
+            <th>Lectures Held</th>
+            <th>Attended</th>
+            <th>Percentage Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in attendance_stats %}
+        <tr>
+            <td><strong>{{ stat.subject }}</strong></td>
+            <td>{{ stat.total }}</td>
+            <td>{{ stat.present }}</td>
+            <td>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span {% if stat.percentage < 75 %}style="color: #ef4444;"{% endif %}>{{ stat.percentage }}%</span>
+                    {% if stat.percentage >= 75 %}
+                    <span class="badge-good">Safe Range</span>
+                    {% else %}
+                    <span class="badge-alert">Shortage</span>
+                    {% endif %}
+                </div>
+                <div class="progress-bar-bg"><div class="progress-fill" style="width: {{ stat.percentage }}%; {% if stat.percentage < 75 %}background: #ef4444;{% endif %}"></div></div>
+                
+                {% if stat.prediction_text %}
+                <div style="margin-top: 8px; font-size: 0.8rem; font-weight: 500;
+                    {% if stat.prediction_type == 'safe' %}color: #10b981;
+                    {% elif stat.prediction_type == 'danger' %}color: #ef4444;
+                    {% else %}color: #d97706;{% endif %}">
+                    {% if stat.prediction_type == 'safe' %}<i class="fa-solid fa-lightbulb"></i>
+                    {% else %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %} 
+                    {{ stat.prediction_text }}
+                </div>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" style="text-align: center; padding: 30px;">No attendance records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

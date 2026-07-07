@@ -1,0 +1,116 @@
+<div class="welcome-hero animate-fade-in" style="margin-bottom: 25px;">
+    <h2>Fees & Receipts</h2>
+    <p>Manage your tuition payments and view past transaction receipts.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 30px;" class="animate-fade-in">
+    
+    <!-- Pending Dues -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-file-invoice-dollar" style="color: #ef4444; margin-right: 8px;"></i> Pending Dues</h3>
+        
+        {% if unpaid_invoices %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            {% for invoice in unpaid_invoices %}
+            <div style="border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; background: var(--bg-body); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #ef4444;"></div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; color: var(--text-primary); font-size: 1.1rem;">{{ invoice.title }}</h4>
+                        <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;"><i class="fa-regular fa-clock"></i> Due: {{ invoice.due_date|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                
+                <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 20px;">
+                    ₹{{ invoice.amount }}
+                </div>
+                
+                <button onclick="processDummyPayment({{ invoice.id }})" style="width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                    <i class="fa-brands fa-google-pay" style="margin-right: 5px; font-size: 1.2rem;"></i> Pay Now
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="padding: 30px; text-align: center; color: var(--text-secondary); border: 1px dashed var(--border-color); border-radius: 8px;">
+            <i class="fa-solid fa-check-circle" style="font-size: 2.5rem; margin-bottom: 15px; color: #10b981; opacity: 0.8;"></i>
+            <h4 style="margin: 0 0 5px 0; color: var(--text-primary);">No Pending Dues!</h4>
+            <p style="margin: 0;">You are all caught up on your payments.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Payment History -->
+    <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i> Payment History</h3>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Transaction ID</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Description</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Date</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Amount Paid</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 15px 10px; font-weight: 600; color: var(--primary); font-family: monospace;">{{ payment.transaction_id }}</td>
+                    <td style="padding: 15px 10px; color: var(--text-primary);">{{ payment.invoice.title }}</td>
+                    <td style="padding: 15px 10px; color: var(--text-secondary); font-size: 0.9rem;">{{ payment.payment_date|date:"M d, Y" }}</td>
+                    <td style="padding: 15px 10px; color: #10b981; font-weight: 700; text-align: right;">₹{{ payment.amount_paid }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 30px; text-align: center; color: var(--text-secondary);">No past payments found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function processDummyPayment(invoiceId) {
+    if(!confirm("Proceed to Payment Gateway? (This is a dummy payment for presentation)")) return;
+    
+    // get csrf token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : getCookie('csrftoken');
+    
+    fetch('/process-dummy-payment/' + invoiceId + '/', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            alert("Payment Successful! Transaction ID: " + data.transaction_id);
+            // Reload module
+            loadModule('{% url "student_fees_view" %}', 'fees-nav');
+        } else {
+            alert("Payment failed: " + data.message);
+        }
+    });
+}
+
+// Helper to get CSRF cookie if not in a form
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>

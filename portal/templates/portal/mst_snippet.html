@@ -1,0 +1,36 @@
+<div class="welcome-hero animate-fade-in">
+    <h2>MST MarkSheet</h2>
+    <p>Mid-Semester Test academic evaluation overview card.</p>
+</div>
+
+<style>
+    .mst-table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; }
+    .mst-table th { padding: 16px; background-color: #1e293b; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; text-align: left; border-bottom: 2px solid #334155; }
+    .mst-table td { padding: 16px; color: #cbd5e1; border-bottom: 1px solid #1e293b; font-size: 0.95rem; }
+    .score-badge { font-weight: 700; color: #3b82f6; }
+</style>
+
+<table class="mst-table animate-fade-in">
+    <thead>
+        <tr>
+            <th style="width: 80px;">S.No.</th>
+            <th>Subject Name</th>
+            <th>MST-1 [Marks:10]</th>
+            <th>MST-2 [Marks:15]</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mark in marks %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ mark.subject.name }}</td>
+            <td><span class="score-badge">{{ mark.mst_1_marks|default:"-" }}</span> / 10</td>
+            <td><span class="score-badge">{{ mark.mst_2_marks|default:"-" }}</span> / 15</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" style="text-align: center; padding: 30px; color: #94a3b8;">No MST marks have been published yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

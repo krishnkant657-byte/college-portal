@@ -1,0 +1,104 @@
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="animate-fade-in" style="background: var(--bg-surface); width: 600px; max-width: 90%; border-radius: var(--radius-card); padding: 30px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+            <h3 style="color: #ef4444; font-size: 1.4rem; margin: 0;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Defaulter List
+            </h3>
+            <button type="button" onclick="document.getElementById('defaulterModalContainer').innerHTML='';" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-secondary);">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <div style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary);">
+            Batch: <strong>{{ allocation.batch.name }}</strong> | Subject: <strong>{{ allocation.subject.name }}</strong><br>
+            <span style="font-size: 0.85rem;">Showing students below 75% attendance threshold.</span>
+        </div>
+
+        <div style="max-height: 350px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--border-color);">
+            <table class="data-table" style="margin: 0; border: none; box-shadow: none;">
+                <thead style="position: sticky; top: 0; background: var(--bg-surface); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <tr>
+                        <th style="width: 50px;">S.No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: center;">Lectures</th>
+                        <th style="text-align: right;">Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for def in defaulters %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight: 500;">{{ def.student.first_name }} {{ def.student.last_name }}<br><span style="font-size: 0.75rem; color: var(--text-secondary);">{{ def.student.computer_code }}</span></td>
+                        <td style="text-align: center; color: var(--text-secondary);">{{ def.attended }} / {{ def.total }}</td>
+                        <td style="text-align: right; color: #ef4444; font-weight: 700;">{{ def.percentage }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 30px; color: #10b981; font-weight: 500;">
+                            <i class="fa-solid fa-check-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            No defaulters found! All students are above 75%.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 15px;">
+            <button type="button" onclick="document.getElementById('defaulterModalContainer').innerHTML='';" style="background: white; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500; font-family: 'Outfit', sans-serif;">
+                Close
+            </button>
+            {% if defaulters %}
+            <button type="button" id="btnEmailDefaulters" onclick="emailDefaulters()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">
+                <i class="fa-solid fa-envelope"></i> Email Warnings to All
+            </button>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function emailDefaulters() {
+        const btn = document.getElementById('btnEmailDefaulters');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+
+        const formData = new FormData();
+        formData.append('allocation_id', '{{ allocation.id }}');
+        // csrf token will be pulled from the parent page
+
+        fetch('{% url "email_defaulters" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.text())
+        .then(data => {
+            if (data === "Emails dispatched successfully!") {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Emails Sent!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    document.getElementById('defaulterModalContainer').innerHTML='';
+                }, 2000);
+            } else {
+                alert("Failed to send emails: " + data);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        })
+        .catch(err => {
+            alert("Error sending emails.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    }
+</script>

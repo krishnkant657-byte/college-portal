@@ -1,0 +1,139 @@
+<div class="welcome-hero animate-fade-in">
+    <h2>Mark Attendance</h2>
+    <p>Select a subject and date to mark daily attendance for your batch.</p>
+</div>
+
+{% if success %}
+<div class="animate-fade-in" style="background: #ecfdf5; border: 1px solid #10b981; color: #047857; padding: 15px 20px; border-radius: var(--radius-card); margin-top: 20px; display: flex; align-items: center; gap: 10px;">
+    <i class="fa-solid fa-circle-check"></i>
+    <span>Attendance records saved successfully!</span>
+</div>
+{% endif %}
+
+<div class="card animate-fade-in" style="margin-top: 20px; padding: 25px; border-radius: var(--radius-card); background: var(--bg-surface); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary);">Select Target Subject/Batch</label>
+            <select id="allocationSelect" onchange="loadAttendance()" style="width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: 'Outfit', sans-serif;">
+                <option value="">-- Choose Assigned Subject --</option>
+                {% for alloc in allocations %}
+                <option value="{{ alloc.id }}" {% if selected_allocation and selected_allocation.id == alloc.id %}selected{% endif %}>
+                    {{ alloc.subject.name }} ({{ alloc.batch.name }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="flex: 0 0 200px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary);">Date</label>
+            <input type="date" id="attendanceDate" value="{{ selected_date }}" onchange="loadAttendance()" style="width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: white; font-family: 'Outfit', sans-serif;">
+        </div>
+    </div>
+</div>
+
+{% if selected_allocation %}
+<div class="data-table-container animate-fade-in" style="margin-top: 30px; background: transparent; border: none; padding: 0;">
+    <form id="attendanceForm" onsubmit="event.preventDefault();">
+        {% csrf_token %}
+        <input type="hidden" name="allocation_id" value="{{ selected_allocation.id }}">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: var(--text-primary); font-size: 1.2rem;">
+                <i class="fa-solid fa-users" style="margin-right: 8px; color: var(--primary);"></i> Student Roster
+            </h3>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="button" onclick="loadDefaulters()" style="background: #ef4444; color: white; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Generate Defaulter List
+                </button>
+                {% if existing_record %}
+                <span style="background: #fef3c7; color: #d97706; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Modifying existing record
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div style="max-height: 500px; overflow-y: auto; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border-color);">
+            <table class="data-table" style="margin: 0; border: none; box-shadow: none;">
+                <thead style="position: sticky; top: 0; z-index: 10; background: var(--bg-surface); box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <tr>
+                        <th style="width: 60px;">S.No</th>
+                        <th style="width: 120px;">Comp. Code</th>
+                        <th>Student Name</th>
+                        <th style="width: 150px; text-align: center;">Status (Present?)</th>
+                    </tr>
+                </thead>
+            <tbody>
+                {% for row in students_data %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><span class="badge badge-primary">{{ row.student.computer_code }}</span></td>
+                    <td style="font-weight: 500; color: var(--text-primary);">{{ row.student.first_name }} {{ row.student.last_name }}</td>
+                    <td style="text-align: center;">
+                        <input type="checkbox" name="present_students" value="{{ row.student.id }}" 
+                            {% if row.is_present %}checked{% endif %}
+                            style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 30px; color: var(--text-secondary);">No students found in this batch.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: right;">
+            <button type="button" onclick="saveAttendance()" style="background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: 'Outfit', sans-serif; font-size: 1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                <i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i> Save Attendance
+            </button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div id="defaulterModalContainer"></div>
+
+<script>
+    function loadDefaulters() {
+        const allocId = document.getElementById('allocationSelect').value;
+        if (allocId) {
+            fetch('{% url "get_defaulter_list" %}?allocation_id=' + allocId)
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('defaulterModalContainer').innerHTML = html;
+            });
+        }
+    }
+
+    function loadAttendance() {
+        const allocId = document.getElementById('allocationSelect').value;
+        const date = document.getElementById('attendanceDate').value;
+        if (allocId && date) {
+            loadModule('{% url "get_faculty_attendance" %}?allocation_id=' + allocId + '&date=' + date, 'attendance-nav');
+        }
+    }
+    
+    function saveAttendance() {
+        const form = document.getElementById('attendanceForm');
+        const formData = new FormData(form);
+        
+        fetch('{% url "save_attendance" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if(response.ok) {
+                loadModule('{% url "get_faculty_attendance" %}?allocation_id=' + formData.get('allocation_id') + '&date=' + formData.get('date') + '&success=1', 'attendance-nav');
+            } else {
+                alert("Failed to save attendance.");
+            }
+        });
+    }
+</script>
