@@ -1,0 +1,391 @@
+<style>
+    .settings-container {
+        padding: 30px;
+        max-width: 900px;
+        margin: 0 auto;
+        color: var(--text-primary);
+    }
+    
+    .settings-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .settings-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin: 0;
+    }
+    .settings-header i {
+        font-size: 2rem;
+        color: var(--accent-primary);
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+
+    .settings-card {
+        background: var(--bg-surface);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .settings-card h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Avatar Upload */
+    .avatar-upload-wrapper {
+        text-align: center;
+    }
+    .current-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+        border: 4px solid var(--accent-primary-light);
+    }
+    
+    .upload-btn {
+        background: var(--accent-primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-block;
+        transition: 0.3s;
+    }
+    .upload-btn:hover {
+        background: #000;
+        transform: translateY(-2px);
+    }
+    #avatar-file {
+        display: none;
+    }
+    
+    #avatar-status {
+        margin-top: 15px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 10px;
+        border-radius: 8px;
+        display: none;
+    }
+    .status-error { background: #fee2e2; color: #ef4444; }
+    .status-success { background: #d1fae5; color: #10b981; }
+    .status-loading { background: #e0e7ff; color: #4f46e5; }
+
+    /* Toggles */
+    .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .toggle-row:last-child {
+        border-bottom: none;
+    }
+    .toggle-label {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+    .toggle-desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+    
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent-primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    @media (max-width: 900px) {
+        .settings-grid { grid-template-columns: 1fr; }
+        .settings-container { padding: 15px; }
+    }
+</style>
+
+<div class="settings-container fade-in">
+    <div class="settings-header">
+        <i class="fa-solid fa-sliders"></i>
+        <h2>Account Settings</h2>
+    </div>
+
+    <div class="settings-grid">
+        <!-- Profile Picture & AI Security -->
+        <div class="settings-card">
+            <h3><i class="fa-solid fa-camera-retro"></i> Profile Identity</h3>
+            <div class="avatar-upload-wrapper">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="Avatar" class="current-avatar" id="avatar-preview">
+                {% else %}
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.first_name }}+{{ request.user.last_name }}&background=111827&color=fff&size=120" alt="Avatar" class="current-avatar" id="avatar-preview">
+                {% endif %}
+                
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                    <i class="fa-solid fa-shield-halved"></i> AI Face Detection Active.<br>You must upload a clear photo of yourself.
+                </p>
+                
+                <label for="avatar-file" class="upload-btn">
+                    <i class="fa-solid fa-upload"></i> Upload Photo
+                </label>
+                <input type="file" id="avatar-file" accept="image/jpeg, image/png">
+                
+                <div id="avatar-status"></div>
+            </div>
+        </div>
+
+        <!-- Security & Access -->
+        <div class="settings-card">
+            <h3><i class="fa-solid fa-lock"></i> Security & Access</h3>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Two-Factor Auth (2FA)</div>
+                    <div class="toggle-desc">Require email OTP on new devices.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('two_factor_auth', this.checked)" {% if request.user.two_factor_auth %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Active Sessions</div>
+                    <div class="toggle-desc">Log out of all devices.</div>
+                </div>
+                <button onclick="promptRevokeSessions()" class="upload-btn" style="padding: 5px 15px; font-size: 0.8rem; background: var(--danger);">Revoke All</button>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Change Password</div>
+                    <div class="toggle-desc">Keep your account secure.</div>
+                </div>
+                <button onclick="openPasswordModal()" class="upload-btn" style="padding: 5px 15px; font-size: 0.8rem;">Update</button>
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="settings-card">
+            <h3><i class="fa-solid fa-bell"></i> Preferences</h3>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Dark Mode</div>
+                    <div class="toggle-desc">Sleek, low-light interface.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('dark_mode', this.checked); toggleDarkModeUI(this.checked);" {% if request.user.dark_mode %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Email Alerts</div>
+                    <div class="toggle-desc">Important academic updates.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('email_alerts', this.checked)" {% if request.user.email_alerts %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">SMS Alerts</div>
+                    <div class="toggle-desc">Exam forms and fees only.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('sms_alerts', this.checked)" {% if request.user.sms_alerts %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Privacy -->
+        <div class="settings-card">
+            <h3><i class="fa-solid fa-eye-slash"></i> Privacy Control</h3>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Public Directory</div>
+                    <div class="toggle-desc">Allow others to find your profile.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('public_directory', this.checked)" {% if request.user.public_directory %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label">Share GPA Metrics</div>
+                    <div class="toggle-desc">Participate in anonymous stats.</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" onchange="updateSetting('share_gpa', this.checked)" {% if request.user.share_gpa %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle File Upload and AI Validation
+    document.getElementById('avatar-file').addEventListener('change', function(e) {
+        if(this.files.length === 0) return;
+        
+        let file = this.files[0];
+        let formData = new FormData();
+        formData.append('avatar_image', file);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        let statusDiv = document.getElementById('avatar-status');
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status-loading';
+        statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing face with AI...';
+        
+        fetch("{% url 'upload_avatar_view' %}", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.text().then(text => ({status: response.status, text: text})))
+        .then(res => {
+            if(res.status === 200) {
+                statusDiv.className = 'status-success';
+                statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Identity Verified! Saved.';
+                
+                // Update preview instantly
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatar-preview').src = e.target.result;
+                    
+                    // Also update sidebar avatar if it exists
+                    let sidebarAvatar = document.querySelector('.profile-avatar');
+                    if(sidebarAvatar) {
+                        sidebarAvatar.src = e.target.result;
+                    }
+                }
+                reader.readAsDataURL(file);
+            } else {
+                statusDiv.className = 'status-error';
+                statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ' + res.text;
+            }
+        })
+        .catch(err => {
+            statusDiv.className = 'status-error';
+            statusDiv.innerHTML = 'Upload failed. Please try again.';
+        });
+    });
+    
+    // UI Mockup for Dark Mode Toggle
+    function toggleDarkModeUI(isDark) {
+        if(isDark) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }
+    
+    function updateSetting(settingName, value) {
+        const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        fetch("{% url 'update_setting_view' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": token
+            },
+            body: JSON.stringify({setting: settingName, value: value})
+        })
+        .then(res => {
+            if(!res.ok) alert("Failed to save setting!");
+        });
+    }
+
+    function promptRevokeSessions() {
+        if(confirm("Are you sure you want to log out of all sessions?")) {
+            const keepCurrent = confirm("Do you want to stay logged in on this device? (Click OK for Yes, Cancel to log out completely)");
+            const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            
+            fetch("{% url 'revoke_sessions_view' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": token
+                },
+                body: JSON.stringify({keep_current: keepCurrent})
+            }).then(() => {
+                alert("Sessions revoked successfully.");
+                if(!keepCurrent) {
+                    window.location.href = "{% url 'logout_view' %}";
+                }
+            });
+        }
+    }
+
+    function openPasswordModal() {
+        const oldPass = prompt("Enter current password:");
+        if(!oldPass) return;
+        const newPass = prompt("Enter new password:");
+        if(!newPass) return;
+        
+        const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        
+        fetch("{% url 'change_password_view' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": token
+            },
+            body: JSON.stringify({old_password: oldPass, new_password: newPass})
+        })
+        .then(res => res.text().then(text => ({status: res.status, text: text})))
+        .then(res => {
+            if(res.status === 200) {
+                alert("Password updated successfully!");
+            } else {
+                alert("Error: " + res.text);
+            }
+        });
+    }
+</script>

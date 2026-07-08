@@ -14,6 +14,15 @@ class CollegeUser(AbstractUser):
     user_type = models.CharField(max_length=15, choices=USER_TYPE_CHOICES, default='student')
     
     computer_code = models.CharField(max_length=5, unique=True, verbose_name="Computer Code")
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+
+    # User Preferences & Settings
+    dark_mode = models.BooleanField(default=False)
+    two_factor_auth = models.BooleanField(default=False)
+    email_alerts = models.BooleanField(default=True)
+    sms_alerts = models.BooleanField(default=True)
+    public_directory = models.BooleanField(default=True)
+    share_gpa = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'computer_code'
     REQUIRED_FIELDS = []
@@ -339,3 +348,26 @@ class LeaveApplication(models.Model):
 
     def __str__(self):
         return f"{self.student.computer_code} - {self.start_date} to {self.end_date} [{self.status}]"
+
+class SupportTicket(models.Model):
+    CATEGORY_CHOICES = [
+        ('IT Issue', 'IT Issue'),
+        ('Fee Issue', 'Fee Issue'),
+        ('Academic', 'Academic'),
+        ('Other', 'Other')
+    ]
+    STATUS_CHOICES = [
+        ('Open', 'Open'),
+        ('In Progress', 'In Progress'),
+        ('Resolved', 'Resolved')
+    ]
+    
+    user = models.ForeignKey(CollegeUser, on_delete=models.CASCADE, related_name='support_tickets')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.category} - {self.subject} [{self.status}]"

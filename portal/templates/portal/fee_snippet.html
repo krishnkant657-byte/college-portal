@@ -45,13 +45,15 @@
     <div class="card" style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
         <h3 style="margin-bottom: 20px; color: var(--text-primary); font-size: 1.2rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--primary); margin-right: 8px;"></i> Payment History</h3>
         
-        <table style="width: 100%; border-collapse: collapse;">
+        <div class="table-responsive" style="width: 100%; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
                     <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Transaction ID</th>
                     <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Description</th>
                     <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600;">Date</th>
                     <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: right;">Amount Paid</th>
+                    <th style="padding: 12px 10px; color: var(--text-secondary); font-weight: 600; text-align: center;">Receipt</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,14 +63,20 @@
                     <td style="padding: 15px 10px; color: var(--text-primary);">{{ payment.invoice.title }}</td>
                     <td style="padding: 15px 10px; color: var(--text-secondary); font-size: 0.9rem;">{{ payment.payment_date|date:"M d, Y" }}</td>
                     <td style="padding: 15px 10px; color: #10b981; font-weight: 700; text-align: right;">₹{{ payment.amount_paid }}</td>
+                    <td style="padding: 15px 10px; text-align: center;">
+                        <button onclick="openReceiptModal('{{ payment.transaction_id }}', '{{ payment.invoice.title|escapejs }}', '{{ payment.payment_date|date:"M d, Y h:i A" }}', '{{ payment.amount_paid }}')" style="background: none; border: none; color: var(--primary); cursor: pointer; padding: 5px 10px; border-radius: 6px; font-weight: 600; transition: 0.2s;" onmouseover="this.style.background='var(--bg-body)'" onmouseout="this.style.background='none'">
+                            <i class="fa-solid fa-file-invoice"></i> View
+                        </button>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" style="padding: 30px; text-align: center; color: var(--text-secondary);">No past payments found.</td>
+                    <td colspan="5" style="padding: 30px; text-align: center; color: var(--text-secondary);">No past payments found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
@@ -113,4 +121,91 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Receipt Modal Logic
+function openReceiptModal(txId, description, date, amount) {
+    document.getElementById('r-tx-id').innerText = txId;
+    document.getElementById('r-desc').innerText = description;
+    document.getElementById('r-date').innerText = date;
+    document.getElementById('r-amount').innerText = '₹' + amount;
+    
+    document.getElementById('receiptModal').style.display = 'flex';
+}
+
+function closeReceiptModal() {
+    document.getElementById('receiptModal').style.display = 'none';
+}
+
+function printReceipt() {
+    const receiptContent = document.getElementById('receipt-content').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <div style="padding: 40px; font-family: sans-serif; display: flex; justify-content: center; width: 100%;">
+            <div style="max-width: 600px; width: 100%;">
+                ${receiptContent}
+            </div>
+        </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload(); // Reload SPA state
+}
 </script>
+
+<!-- Sophisticated Receipt Modal -->
+<div id="receiptModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: white; border-radius: 16px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); display: flex; flex-direction: column;">
+        
+        <!-- Header Actions -->
+        <div style="display: flex; justify-content: flex-end; padding: 15px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <button onclick="printReceipt()" style="background: none; border: none; color: #3b82f6; font-weight: 600; cursor: pointer; padding: 5px 15px; border-radius: 6px;"><i class="fa-solid fa-print"></i> Print</button>
+            <button onclick="closeReceiptModal()" style="background: none; border: none; color: #ef4444; font-weight: 600; cursor: pointer; padding: 5px 15px; border-radius: 6px;"><i class="fa-solid fa-xmark"></i> Close</button>
+        </div>
+        
+        <!-- Printable Area -->
+        <div id="receipt-content" style="padding: 30px; background: white; color: #1e293b;">
+            <!-- Institute Header -->
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #cbd5e1; padding-bottom: 20px;">
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 1px;">IPS Academy</h2>
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">INSTITUTE OF ENGINEERING & SCIENCE</div>
+                <div style="margin-top: 10px; font-weight: 700; color: #10b981; border: 1px solid #10b981; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;">PAYMENT SUCCESSFUL</div>
+            </div>
+            
+            <!-- Details Grid -->
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Transaction ID</span>
+                    <span id="r-tx-id" style="font-family: monospace; font-weight: 700; color: #0f172a;">---</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Date & Time</span>
+                    <span id="r-date" style="font-weight: 600; color: #0f172a;">---</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Student Name</span>
+                    <span style="font-weight: 600; color: #0f172a;">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Computer Code</span>
+                    <span style="font-weight: 600; color: #0f172a;">{{ user.computer_code }}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 5px;">
+                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">Payment Description</span>
+                    <span id="r-desc" style="font-weight: 600; color: #0f172a;">---</span>
+                </div>
+            </div>
+            
+            <!-- Total -->
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0;">
+                <span style="color: #0f172a; font-weight: 700; font-size: 1.1rem;">Total Paid</span>
+                <span id="r-amount" style="color: #10b981; font-weight: 800; font-size: 1.5rem;">₹---</span>
+            </div>
+            
+            <div style="text-align: center; margin-top: 25px; color: #94a3b8; font-size: 0.75rem;">
+                This is a computer generated receipt and does not require a physical signature.
+            </div>
+        </div>
+    </div>
+</div>

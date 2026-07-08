@@ -4,12 +4,17 @@ from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.views.decorators.cache import never_cache
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import ExamFormRecord, StudentProfile
 import random
+import cv2
+import numpy as np
+import base64
 
 # --- CORE STUDENT DASHBOARD VIEW ---
+@never_cache
 @login_required
 def dashboard(request):
     # Enforce strict Student-only access
@@ -60,6 +65,7 @@ def mark_notifications_read(request):
 
 
 # --- CORE FACULTY DASHBOARD VIEW ---
+@never_cache
 @login_required
 def faculty_dashboard_view(request):
     # Enforce Faculty & Coordinator access
@@ -91,6 +97,7 @@ def faculty_dashboard_view(request):
 
 
 # --- LOGIN PORTAL INTERFACE CONTROL ENGINE ---
+@never_cache
 def login_view(request):
     if request.user.is_authenticated:
         if request.user.is_superuser or getattr(request.user, 'user_type', None) in ['faculty', 'coordinator']:
@@ -112,6 +119,22 @@ def login_view(request):
             elif selected_portal == 'student' and user.user_type != 'student':
                 return render(request, 'portal/login.html', {'error': 'You are not authorized for the Student Portal.'})
                 
+            if user.two_factor_auth:
+                otp = str(random.randint(100000, 999999))
+                request.session['pre_2fa_user_id'] = user.id
+                request.session['pre_2fa_otp'] = otp
+                request.session['pre_2fa_portal'] = selected_portal
+                
+                if user.email:
+                    send_mail(
+                        'Your Portal 2FA Code',
+                        f'Your login verification code is: {otp}\nDo not share this code with anyone.',
+                        settings.EMAIL_HOST_USER,
+                        [user.email],
+                        fail_silently=True,
+                    )
+                return redirect('verify_otp_view')
+
             login(request, user)
             
             # Dynamic Target Dashboard Branch Routing
@@ -1032,4 +1055,226 @@ def student_submit_assignment(request):
             return HttpResponse("Success")
         except Exception as e:
             return HttpResponse(str(e), status=400)
+    return HttpResponse("Invalid request", status=400)
+
+# --- SETTINGS & AVATAR MODULE ---
+@login_required
+def settings_view(request):
+    # Determine the profile type to pass relevant info to the settings panel
+    is_student = hasattr(request.user, 'student_profile')
+    return render(request, 'portal/settings_snippet.html', {'is_student': is_student})
+
+@login_required
+def upload_avatar_view(request):
+    if request.method == "POST":
+        if 'avatar_image' not in request.FILES:
+            return HttpResponse("No image provided.", status=400)
+            
+        file = request.FILES['avatar_image']
+        
+        # Read image into memory for OpenCV
+        try:
+            image_bytes = file.read()
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return HttpResponse("Invalid image format.", status=400)
+                
+            # Convert to grayscale for Haar cascade
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            
+            # Load Haar cascade
+            cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+            face_cascade = cv2.CascadeClassifier(cascade_path)
+            
+            # Detect faces
+            faces = face_cascade.detectMultiScale(
+                gray,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30),
+                flags=cv2.CASCADE_SCALE_IMAGE
+            )
+            
+            if len(faces) == 0:
+                return HttpResponse("No human face detected. Please upload a clear picture of yourself.", status=400)
+            elif len(faces) > 1:
+                return HttpResponse("Multiple faces detected. Please upload a picture of just yourself.", status=400)
+                
+            # Face validated successfully! Save to model.
+            # We must rewind the file pointer before saving it to Django's ImageField
+            file.seek(0)
+            request.user.avatar.save(f"{request.user.computer_code}_avatar.jpg", file, save=True)
+            
+            return HttpResponse("Success")
+        except Exception as e:
+            return HttpResponse(f"Error processing image: {str(e)}", status=500)
+            
+    return HttpResponse("Invalid request", status=400)
+
+@never_cache
+def verify_otp_view(request):
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp')
+        saved_otp = request.session.get('pre_2fa_otp')
+        user_id = request.session.get('pre_2fa_user_id')
+        portal = request.session.get('pre_2fa_portal')
+        
+        if str(entered_otp) == str(saved_otp) and user_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user = User.objects.filter(id=user_id).first()
+            if user:
+                login(request, user)
+                # Cleanup session variables
+                del request.session['pre_2fa_otp']
+                del request.session['pre_2fa_user_id']
+                del request.session['pre_2fa_portal']
+                
+                if portal == 'faculty':
+                    return redirect('faculty_dashboard')
+                return redirect('student_dashboard')
+                
+        return render(request, 'portal/otp_verify.html', {'error': 'Invalid or expired OTP.'})
+        
+    # Check if they should be here
+    if not request.session.get('pre_2fa_user_id'):
+        return redirect('login_view')
+        
+    return render(request, 'portal/otp_verify.html')
+
+@login_required
+def update_setting_view(request):
+    import json
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            setting_name = data.get('setting')
+            value = data.get('value')
+            
+            allowed_settings = ['dark_mode', 'two_factor_auth', 'email_alerts', 'sms_alerts', 'public_directory', 'share_gpa']
+            
+            if setting_name in allowed_settings:
+                setattr(request.user, setting_name, value)
+                request.user.save()
+                return HttpResponse("Success")
+        except Exception as e:
+            return HttpResponse(str(e), status=400)
+    return HttpResponse("Invalid", status=400)
+
+@login_required
+def revoke_sessions_view(request):
+    if request.method == "POST":
+        from django.contrib.sessions.models import Session
+        import json
+        
+        # Read the flag if user wants to stay logged in on current device
+        try:
+            data = json.loads(request.body)
+            keep_current = data.get('keep_current', False)
+        except:
+            keep_current = False
+            
+        current_session_key = request.session.session_key
+        
+        # We find all sessions in the DB and delete the ones belonging to the user
+        for s in Session.objects.all():
+            if s.get_decoded().get('_auth_user_id') == str(request.user.id):
+                if keep_current and s.session_key == current_session_key:
+                    continue
+                s.delete()
+                
+        return HttpResponse("Sessions revoked")
+    return HttpResponse("Invalid request", status=400)
+
+@login_required
+def change_password_view(request):
+    import json
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            old_pass = data.get('old_password')
+            new_pass = data.get('new_password')
+            
+            if not request.user.check_password(old_pass):
+                return HttpResponse("Incorrect current password.", status=400)
+                
+            request.user.set_password(new_pass)
+            request.user.save()
+            
+            # Since changing password logs them out, we re-log them in to keep the session alive
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            
+            return HttpResponse("Password updated successfully.")
+        except Exception as e:
+            return HttpResponse(str(e), status=400)
+    return HttpResponse("Invalid request", status=400)
+
+@login_required
+def help_center_view(request):
+    from .models import SupportTicket
+    is_faculty = (request.user.user_type == 'faculty')
+    if is_faculty:
+        tickets = SupportTicket.objects.all().order_by('-created_at')
+    else:
+        tickets = SupportTicket.objects.filter(user=request.user).order_by('-created_at')
+        
+    context = {
+        'tickets': tickets,
+        'is_faculty': is_faculty
+    }
+    return render(request, 'portal/help_center_snippet.html', context)
+
+@login_required
+def submit_ticket_view(request):
+    import json
+    from .models import SupportTicket
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            category = data.get('category')
+            subject = data.get('subject')
+            description = data.get('description')
+            
+            SupportTicket.objects.create(
+                user=request.user,
+                category=category,
+                subject=subject,
+                description=description,
+                status='Open'
+            )
+            return HttpResponse("Ticket submitted successfully.")
+        except Exception as e:
+            return HttpResponse(str(e), status=400)
+    return HttpResponse("Invalid request", status=400)
+
+@login_required
+def resolve_ticket_view(request, ticket_id):
+    from .models import SupportTicket
+    if request.method == "POST":
+        if request.user.user_type == 'faculty':
+            try:
+                ticket = SupportTicket.objects.get(id=ticket_id)
+                ticket.status = 'Resolved'
+                ticket.save()
+                return HttpResponse("Ticket resolved.")
+            except SupportTicket.DoesNotExist:
+                return HttpResponse("Ticket not found.", status=404)
+        return HttpResponse("Unauthorized", status=403)
+    return HttpResponse("Invalid request", status=400)
+
+@login_required
+def delete_ticket_view(request, ticket_id):
+    from .models import SupportTicket
+    if request.method == "POST":
+        try:
+            ticket = SupportTicket.objects.get(id=ticket_id)
+            if request.user.user_type == 'faculty' or ticket.user == request.user:
+                ticket.delete()
+                return HttpResponse("Ticket deleted.")
+            return HttpResponse("Unauthorized", status=403)
+        except SupportTicket.DoesNotExist:
+            return HttpResponse("Ticket not found.", status=404)
     return HttpResponse("Invalid request", status=400)

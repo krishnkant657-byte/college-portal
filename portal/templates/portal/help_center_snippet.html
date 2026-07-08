@@ -1,0 +1,281 @@
+<style>
+    .help-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    @media (min-width: 992px) {
+        .help-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    .faq-item {
+        border-bottom: 1px solid var(--border-color);
+        padding: 15px 0;
+    }
+    .faq-question {
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-primary);
+    }
+    .faq-answer {
+        display: none;
+        padding-top: 10px;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .ticket-card {
+        background: var(--bg-body);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+    .badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .badge-open { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .badge-resolved { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    
+    .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        width: 100%;
+        transition: 0.2s;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+</style>
+
+<div>
+    <h3 style="margin-bottom: 20px; color: var(--text-primary);"><i class="fa-solid fa-headset" style="color: var(--primary); margin-right: 10px;"></i> Help Center & IT Support</h3>
+    
+    <div class="help-grid">
+        <!-- FAQ Section -->
+        <div>
+            <h4 style="margin-bottom: 15px; color: var(--text-secondary);">Frequently Asked Questions</h4>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How do I pay my semester fees? <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    You can pay your semester fees by navigating to the "Fees & Receipts" tab. We accept UPI, Net Banking, and Credit/Debit cards.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How is attendance calculated? <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Attendance is calculated cumulatively across all subjects. A minimum of 75% is required to be eligible for the end-semester exams.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I change my registered email? <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    To change your registered email, please submit an "IT Issue" support ticket using the form on this page. Our admins will verify and update it for you.
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How do I get my ID card? <i class="fa-solid fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    Navigate to the "Identity Card" tab. Ensure your profile photo is uploaded. You can then download or print your digital ID card directly.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ticketing Section -->
+        <div>
+            {% if not is_faculty %}
+            <h4 style="margin-bottom: 15px; color: var(--text-secondary);">Submit a Support Ticket</h4>
+            <div class="ticket-card" style="border-color: var(--primary);">
+                <form id="ticketForm" onsubmit="submitTicket(event)">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="ticketCategory" required>
+                            <option value="IT Issue">IT / Technical Issue</option>
+                            <option value="Fee Issue">Fee / Payment Issue</option>
+                            <option value="Academic">Academic Issue</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" id="ticketSubject" placeholder="Brief summary of the issue" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="ticketDescription" rows="3" placeholder="Provide more details..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Submit Ticket</button>
+                </form>
+            </div>
+            {% endif %}
+            
+            <h4 style="margin-bottom: 15px; margin-top: 30px; color: var(--text-secondary);">
+                {% if is_faculty %}Manage Student Tickets{% else %}My Recent Tickets{% endif %}
+            </h4>
+            
+            <div id="ticketList">
+                {% if tickets %}
+                    {% for ticket in tickets %}
+                    <div class="ticket-card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span class="badge {% if ticket.status == 'Resolved' %}badge-resolved{% else %}badge-open{% endif %}">{{ ticket.status }}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ ticket.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <h5 style="margin: 0 0 5px; color: var(--text-primary); font-size: 1.05rem;">{{ ticket.subject }}</h5>
+                        <p style="margin: 0 0 10px; font-size: 0.85rem; color: var(--text-secondary);">
+                            <strong>{{ ticket.category }}</strong> 
+                            {% if is_faculty %} | Submitted by: {{ ticket.user.username }} {% endif %}
+                        </p>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-primary);">{{ ticket.description }}</p>
+                        
+                        <div style="margin-top: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                            {% if is_faculty %}
+                                {% if ticket.status != 'Resolved' %}
+                                <button onclick="resolveTicket({{ ticket.id }})" class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.85rem; background: #10b981;">Mark Resolved</button>
+                                {% else %}
+                                <button onclick="deleteTicket({{ ticket.id }})" class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.85rem; background: #ef4444;"><i class="fa-solid fa-trash"></i> Delete Trash</button>
+                                {% endif %}
+                            {% else %}
+                                <button onclick="deleteTicket({{ ticket.id }})" class="btn-primary" style="width: auto; padding: 6px 12px; font-size: 0.85rem; background: #ef4444;"><i class="fa-solid fa-xmark"></i> Withdraw Request</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">No support tickets found.</p>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleFaq(element) {
+        const answer = element.nextElementSibling;
+        const icon = element.querySelector('i');
+        if (answer.style.display === 'block') {
+            answer.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            answer.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+            icon.style.transition = 'transform 0.2s';
+        }
+    }
+    
+    function submitTicket(e) {
+        e.preventDefault();
+        const category = document.getElementById('ticketCategory').value;
+        const subject = document.getElementById('ticketSubject').value;
+        const description = document.getElementById('ticketDescription').value;
+        const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        
+        fetch("{% url 'submit_ticket_view' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": token
+            },
+            body: JSON.stringify({category: category, subject: subject, description: description})
+        })
+        .then(res => res.text().then(text => ({status: res.status, text: text})))
+        .then(res => {
+            if(res.status === 200) {
+                alert("Ticket submitted successfully!");
+                // Try to find the active navigation button for help center if it exists.
+                // Assuming it has id="help-nav" or similar in dashboard.html
+                loadModule("{% url 'help_center_view' %}", "help-nav");
+            } else {
+                alert("Error submitting ticket: " + res.text);
+            }
+        });
+    }
+    
+    function resolveTicket(ticketId) {
+        if(confirm("Are you sure you want to mark this ticket as resolved?")) {
+            const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            fetch(`/resolve-ticket/${ticketId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": token
+                }
+            })
+            .then(res => {
+                if(res.ok) {
+                    alert("Ticket resolved.");
+                    loadModule("{% url 'help_center_view' %}", "help-nav");
+                } else {
+                    alert("Failed to resolve ticket.");
+                }
+            });
+        }
+    }
+    
+    function deleteTicket(ticketId) {
+        if(confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) {
+            const token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            fetch(`/delete-ticket/${ticketId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": token
+                }
+            })
+            .then(res => {
+                if(res.ok) {
+                    alert("Ticket deleted.");
+                    loadModule("{% url 'help_center_view' %}", "help-nav");
+                } else {
+                    alert("Failed to delete ticket.");
+                }
+            });
+        }
+    }
+</script>

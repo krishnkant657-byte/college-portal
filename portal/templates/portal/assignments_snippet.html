@@ -7,15 +7,15 @@
     {% for assignment in assignments %}
     {% with sub=assignment.sub %}
     <div class="card animate-fade-in" style="background: var(--bg-surface); padding: 25px; border-radius: var(--radius-card); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 4px solid {% if sub %}#10b981{% elif now > assignment.due_date %}#ef4444{% else %}var(--primary){% endif %};">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-            <div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; gap: 15px;">
+            <div style="flex: 1; min-width: 200px;">
                 <h3 style="margin: 0 0 5px 0; color: var(--text-primary); font-size: 1.3rem;">{{ assignment.title }}</h3>
                 <div style="color: var(--text-secondary); font-size: 0.95rem;">
                     <strong>{{ assignment.subject.name }}</strong> | By: {{ assignment.faculty.first_name }} {{ assignment.faculty.last_name }} | Points: {{ assignment.points }}
                 </div>
             </div>
             
-            <div style="text-align: right;">
+            <div style="text-align: right; min-width: 140px;">
                 <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;">Deadline</div>
                 <div style="font-weight: 600; color: {% if sub %}#10b981{% elif now > assignment.due_date %}#ef4444{% else %}var(--text-primary){% endif %};">
                     {{ assignment.due_date|date:"M d, Y h:i A" }}

@@ -5,7 +5,8 @@ from django.conf.urls.static import static
 from portal import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # 🛡️ OBFUSCATED ADMIN PANEL: Changed from 'admin/' to prevent automated bot brute-forcing.
+    path('secure-backend-admin/', admin.site.urls),
     
     # 🎯 Match this name parameter with what your login view redirects to
     path('', views.dashboard, name='student_dashboard'), 
@@ -44,4 +45,14 @@ urlpatterns = [
     path('student-leave/', views.student_leave_view, name='student_leave_view'),
     path('faculty-leave/', views.faculty_leave_view, name='faculty_leave_view'),
     path('process-leave-action/<int:leave_id>/', views.process_leave_action, name='process_leave_action'),
+    path('settings/', views.settings_view, name='settings_view'),
+    path('upload-avatar/', views.upload_avatar_view, name='upload_avatar_view'),
+    path('verify-otp/', views.verify_otp_view, name='verify_otp_view'),
+    path('update-setting/', views.update_setting_view, name='update_setting_view'),
+    path('revoke-sessions/', views.revoke_sessions_view, name='revoke_sessions_view'),
+    path('change-password/', views.change_password_view, name='change_password_view'),
+    path('help-center/', views.help_center_view, name='help_center_view'),
+    path('submit-ticket/', views.submit_ticket_view, name='submit_ticket_view'),
+    path('resolve-ticket/<int:ticket_id>/', views.resolve_ticket_view, name='resolve_ticket_view'),
+    path('delete-ticket/<int:ticket_id>/', views.delete_ticket_view, name='delete_ticket_view'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

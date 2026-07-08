@@ -143,10 +143,15 @@
         .alert-error { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
         .alert-success { background-color: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
 
+        .mobile-brand { display: none; font-size: 1.5rem; font-weight: 800; color: var(--accent-primary); margin-bottom: 25px; letter-spacing: -0.5px; text-align: center; }
+        .mobile-brand i { margin-right: 8px; }
+
         @media (max-width: 900px) {
+            body, .login-container { height: auto; min-height: 100vh; overflow: visible; display: block; }
             .showcase-side { display: none; }
-            .form-side { flex: 1; padding: 20px; }
-            .form-wrapper { padding: 30px; }
+            .form-side { padding: 20px; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+            .form-wrapper { padding: 30px; width: 100%; margin: 0 auto; }
+            .mobile-brand { display: block; }
         }
     </style>
 </head>
@@ -160,6 +165,10 @@
 
         <div class="form-side">
             <div class="form-wrapper">
+                <div class="mobile-brand">
+                    <i class="fa-solid fa-graduation-cap"></i> IPS Academy
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px;">CMS Portal</div>
+                </div>
                 <h2>Welcome Back</h2>
                 <p class="subtitle">Please select your portal network tier to authenticate.</p>
                 

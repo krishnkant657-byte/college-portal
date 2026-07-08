@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPS Academy - 2FA Security</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --error: #ef4444;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: var(--surface);
+            padding: 30px 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-sizing: border-box;
+        }
+        .icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        h2 { margin: 0 0 10px; }
+        p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 30px; }
+        
+        .otp-inputs {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .otp-inputs input {
+            width: clamp(35px, 12vw, 45px);
+            height: clamp(45px, 15vw, 55px);
+            font-size: clamp(1.2rem, 5vw, 1.5rem);
+            text-align: center;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            background: rgba(255,255,255,0.02);
+            color: white;
+            font-weight: 700;
+        }
+        .otp-inputs input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+        .error { color: var(--error); margin-top: 15px; font-weight: 500; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+    <h2>Two-Factor Auth</h2>
+    <p>We've sent a 6-digit code to your email. Please enter it below to securely log in.</p>
+    
+    <form method="POST" action="{% url 'verify_otp_view' %}">
+        {% csrf_token %}
+        <div class="otp-inputs" id="otp-container">
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char" autofocus>
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char">
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char">
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char">
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char">
+            <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="otp-char">
+        </div>
+        <input type="hidden" name="otp" id="hidden-otp">
+        
+        <button type="submit" class="btn" onclick="gatherOTP()">Verify & Login</button>
+        
+        {% if error %}
+            <div class="error"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll('.otp-char');
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            if(e.target.value.length > 0 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        });
+        input.addEventListener('keydown', (e) => {
+            if(e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
+    });
+
+    function gatherOTP() {
+        let otp = '';
+        inputs.forEach(i => otp += i.value);
+        document.getElementById('hidden-otp').value = otp;
+    }
+</script>
+
+</body>
+</html>

@@ -30,7 +30,44 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-j0o#i@^c9u+3jbjgbztrq!w_n-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+# Operating Environment (development vs production)
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
+
+# Allowed Hosts Parsing
+allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '*')
+if allowed_hosts_env == '*':
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+
+# -----------------------------------------------------------------------------
+# 🛡️ ADVANCED PRODUCTION SECURITY SETTINGS
+# These strict rules will ONLY activate if ENVIRONMENT is set to 'production'.
+# This prevents breaking the local development server (127.0.0.1:8000).
+# -----------------------------------------------------------------------------
+if ENVIRONMENT == 'production':
+    # 1. SSL/HTTPS Redirection (Force all HTTP traffic to HTTPS)
+    SECURE_SSL_REDIRECT = True
+    
+    # 2. Strict Transport Security (HSTS) (Force browsers to always use HTTPS for 1 year)
+    SECURE_HSTS_SECONDS = 31536000 # 1 Year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # 3. Secure Cookies (Only send cookies over HTTPS)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # 4. Browser Protections
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY' # Prevent clickjacking by disallowing iframe embedding
+else:
+    # Development fallbacks
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 
 # Application definition
@@ -126,9 +163,17 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 AUTH_USER_MODEL = 'portal.CollegeUser'
 LOGIN_URL = 'login_view'
 
+
+# Session Security settings
+SESSION_COOKIE_AGE = 900 # 15 minutes
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Email Configuration Engine
 # Switch back to real email dispatching
